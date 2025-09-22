@@ -6,6 +6,9 @@ const compression = require("compression");
 const http = require("http");
 require("dotenv").config();
 
+// 🔹 Conexión DB
+const db = require("./config/db");
+
 // 🔹 Importar rutas
 const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
@@ -19,8 +22,6 @@ const usuariosRoutes = require("./routes/usuarios");
 
 // 🔹 Importar Socket.IO
 const { initSocket } = require("./socket");
-// 🔹 Importar conexión DB
-const pool = require("./db");
 
 const app = express();
 const server = http.createServer(app);
@@ -28,54 +29,22 @@ const server = http.createServer(app);
 // ===============================
 // 🛡 Middlewares Globales
 // ===============================
-app.use(helmet()); // Seguridad básica
+app.use(helmet());
 app.use(
   cors({
     origin: [
-      process.env.FRONTEND_URL,
-      "http://localhost:5173", // frontend Vite
-      "http://localhost:3000", // CRA
+      process.env.CORS_ORIGIN,
+      "http://localhost:5173", // desarrollo
+      "http://localhost:3000", // otro dev
     ].filter(Boolean),
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
-app.use(compression()); // Comprimir respuestas
-app.use(express.json()); // Parseo JSON
-app.use(morgan("dev")); // Logs de requests
-
-// ===============================
-// 📌 Ruta raíz (bienvenida)
-// ===============================
-app.get("/", (req, res) => {
-  res.json({
-    msg: "✅ Backend CAJAX funcionando correctamente 🚀",
-    version: "1.0.0",
-    docs: "/api",
-  });
-});
-
-// ===============================
-// 📌 Ruta de salud (/api/health)
-// ===============================
-app.get("/api/health", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT 1 + 1 AS result");
-    res.json({
-      status: "ok",
-      db: rows[0].result === 2 ? "conectada" : "error",
-      socket: "inicializado",
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: "error",
-      msg: "Error conectando a la base de datos",
-      error: err.message,
-    });
-  }
-});
+app.use(compression());
+app.use(express.json());
+app.use(morgan("dev"));
 
 // ===============================
 // 📌 Rutas principales
@@ -120,4 +89,5 @@ server.listen(PORT, () => {
 initSocket(server);
 
 module.exports = app;
+
 
