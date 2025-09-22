@@ -19,6 +19,8 @@ const usuariosRoutes = require("./routes/usuarios");
 
 // 🔹 Importar Socket.IO
 const { initSocket } = require("./socket");
+// 🔹 Importar conexión DB
+const pool = require("./db");
 
 const app = express();
 const server = http.createServer(app);
@@ -32,7 +34,7 @@ app.use(
     origin: [
       process.env.FRONTEND_URL,
       "http://localhost:5173", // frontend Vite
-      "http://localhost:3000", // posible React CRA
+      "http://localhost:3000", // CRA
     ].filter(Boolean),
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -42,6 +44,38 @@ app.use(
 app.use(compression()); // Comprimir respuestas
 app.use(express.json()); // Parseo JSON
 app.use(morgan("dev")); // Logs de requests
+
+// ===============================
+// 📌 Ruta raíz (bienvenida)
+// ===============================
+app.get("/", (req, res) => {
+  res.json({
+    msg: "✅ Backend CAJAX funcionando correctamente 🚀",
+    version: "1.0.0",
+    docs: "/api",
+  });
+});
+
+// ===============================
+// 📌 Ruta de salud (/api/health)
+// ===============================
+app.get("/api/health", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT 1 + 1 AS result");
+    res.json({
+      status: "ok",
+      db: rows[0].result === 2 ? "conectada" : "error",
+      socket: "inicializado",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      msg: "Error conectando a la base de datos",
+      error: err.message,
+    });
+  }
+});
 
 // ===============================
 // 📌 Rutas principales
@@ -86,3 +120,4 @@ server.listen(PORT, () => {
 initSocket(server);
 
 module.exports = app;
+
