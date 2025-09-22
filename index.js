@@ -6,9 +6,6 @@ const compression = require("compression");
 const http = require("http");
 require("dotenv").config();
 
-// 🔹 Conexión DB
-const db = require("./config/db");
-
 // 🔹 Importar rutas
 const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
@@ -33,9 +30,9 @@ app.use(helmet());
 app.use(
   cors({
     origin: [
-      process.env.CORS_ORIGIN,
-      "http://localhost:5173", // desarrollo
-      "http://localhost:3000", // otro dev
+      process.env.CORS_ORIGIN || "https://crearvison.site", // URL frontend
+      "http://localhost:5173", // desarrollo local
+      "http://localhost:3000",
     ].filter(Boolean),
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -89,5 +86,6 @@ server.listen(PORT, () => {
 initSocket(server);
 
 module.exports = app;
+
 
 
